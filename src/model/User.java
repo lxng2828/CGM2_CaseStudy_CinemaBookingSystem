@@ -40,9 +40,9 @@ public abstract class User {
 
     @Override
     public String toString() {
-        return "User{" +
+        return "Nguoi Dung[" +
                 "email='" + email + '\'' +
-                ", role=" + role +
-                '}';
+                ", Vai Tro=" + role +
+                ']';
     }
 }
