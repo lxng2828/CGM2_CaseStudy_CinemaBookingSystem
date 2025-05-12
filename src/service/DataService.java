@@ -9,20 +9,23 @@ import model.Ticket;
 import model.User;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class DataService {
-
     private static final String USERS_FILE_PATH = "data/users.csv";
     private static final String MOVIES_FILE_PATH = "data/movies.csv";
     private static final String SHOWTIMES_FILE_PATH = "data/showtimes.csv";
     private static final String BOOKINGS_FILE_PATH = "data/bookings.csv";
+    private static final String EXPORTS_DIR = "exports/";
     private static final String CSV_DELIMITER = ",";
     private static final String SEAT_LIST_DELIMITER = ";";
 
@@ -32,18 +35,15 @@ public class DataService {
     public List<User> loadUsers() {
         List<User> users = new ArrayList<>();
         String line = "";
-
         try (BufferedReader br = new BufferedReader(new FileReader(USERS_FILE_PATH))) {
             while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+                if (line.trim().isEmpty())
                     continue;
-                }
                 String[] userData = line.split(CSV_DELIMITER);
                 if (userData.length == 3) {
                     String email = userData[0].trim();
                     String password = userData[1].trim();
                     String roleString = userData[2].trim().toUpperCase();
-
                     Role role;
                     try {
                         role = Role.valueOf(roleString);
@@ -52,7 +52,6 @@ public class DataService {
                                 "Loi: Vai tro khong hop le '" + roleString + "' trong file users.csv dong: " + line);
                         continue;
                     }
-
                     if (role == Role.ADMIN) {
                         users.add(new Admin(email, password));
                     } else if (role == Role.CUSTOMER) {
@@ -71,12 +70,10 @@ public class DataService {
     public List<Movie> loadMovies() {
         List<Movie> movies = new ArrayList<>();
         String line = "";
-
         try (BufferedReader br = new BufferedReader(new FileReader(MOVIES_FILE_PATH))) {
             while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+                if (line.trim().isEmpty())
                     continue;
-                }
                 String[] movieData = line.split(CSV_DELIMITER);
                 if (movieData.length == 5) {
                     String movieId = movieData[0].trim();
@@ -104,12 +101,10 @@ public class DataService {
     public List<Showtime> loadShowtimes() {
         List<Showtime> showtimes = new ArrayList<>();
         String line = "";
-
         try (BufferedReader br = new BufferedReader(new FileReader(SHOWTIMES_FILE_PATH))) {
             while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+                if (line.trim().isEmpty())
                     continue;
-                }
                 String[] showtimeData = line.split(CSV_DELIMITER);
                 if (showtimeData.length == 7) {
                     String showtimeId = showtimeData[0].trim();
@@ -146,12 +141,10 @@ public class DataService {
     public List<Ticket> loadBookings() {
         List<Ticket> bookings = new ArrayList<>();
         String line = "";
-
         try (BufferedReader br = new BufferedReader(new FileReader(BOOKINGS_FILE_PATH))) {
             while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) {
+                if (line.trim().isEmpty())
                     continue;
-                }
                 String[] ticketData = line.split(CSV_DELIMITER);
                 if (ticketData.length == 6) {
                     String ticketId = ticketData[0].trim();
@@ -166,12 +159,10 @@ public class DataService {
                         System.err.println("Loi: Tong tien khong phai la so trong bookings.csv dong: " + line);
                         continue;
                     }
-
                     List<String> bookedSeatsList = new ArrayList<>();
                     if (!bookedSeatsString.isEmpty()) {
                         bookedSeatsList.addAll(Arrays.asList(bookedSeatsString.split(SEAT_LIST_DELIMITER)));
                     }
-
                     bookings.add(
                             new Ticket(ticketId, showtimeId, customerEmail, bookedSeatsList, bookingDate, totalPrice));
                 } else {
@@ -247,7 +238,6 @@ public class DataService {
                     }
                 }
                 String bookedSeatsString = seatsBuilder.toString();
-
                 writer.println(ticket.getTicketId() + CSV_DELIMITER +
                         ticket.getShowtimeId() + CSV_DELIMITER +
                         ticket.getCustomerEmail() + CSV_DELIMITER +
@@ -258,5 +248,98 @@ public class DataService {
         } catch (IOException e) {
             System.err.println("Loi khi ghi file bookings.csv: " + e.getMessage());
         }
+    }
+
+    public boolean exportAllBookingsToCSV(List<Ticket> allBookings, List<Showtime> allShowtimes,
+            List<Movie> allMovies) {
+        if (allBookings == null || allBookings.isEmpty()) {
+            System.out.println("Khong co du lieu dat ve de xuat.");
+            return false;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+        String timestamp = LocalDateTime.now().format(formatter);
+        String fileName = EXPORTS_DIR + "LichSuDatVe_" + timestamp + ".csv";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            writer.write(
+                    "MaVe,EmailKhachHang,TenPhim,MaPhim,NgayChieu,GioChieu,PhongChieu,MaSuatChieu,DanhSachGhe,TongTien(VND),NgayDatVe\n");
+
+            for (Ticket ticket : allBookings) {
+                Showtime showtime = findShowtimeByIdInternal(ticket.getShowtimeId(), allShowtimes);
+                Movie movie = null;
+                String movieId = "N/A";
+                String movieName = "Khong ro";
+                String showDate = "N/A";
+                String startTime = "N/A";
+                String roomName = "N/A";
+
+                if (showtime != null) {
+                    movieId = showtime.getMovieId();
+                    movie = findMovieByIdInternal(movieId, allMovies);
+                    if (movie != null) {
+                        movieName = movie.getMovieName();
+                    }
+                    showDate = showtime.getShowDate();
+                    startTime = showtime.getStartTime();
+                    roomName = showtime.getRoomName();
+                }
+
+                StringBuilder seatsBuilder = new StringBuilder();
+                if (ticket.getBookedSeats() != null && !ticket.getBookedSeats().isEmpty()) {
+                    for (int i = 0; i < ticket.getBookedSeats().size(); i++) {
+                        seatsBuilder.append(ticket.getBookedSeats().get(i));
+                        if (i < ticket.getBookedSeats().size() - 1) {
+                            seatsBuilder.append(SEAT_LIST_DELIMITER);
+                        }
+                    }
+                }
+                String bookedSeatsString = seatsBuilder.toString();
+
+                writer.write(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%.0f,%s\n",
+                        escapeCsv(ticket.getTicketId()),
+                        escapeCsv(ticket.getCustomerEmail()),
+                        escapeCsv(movieName),
+                        escapeCsv(movieId),
+                        escapeCsv(showDate),
+                        escapeCsv(startTime),
+                        escapeCsv(roomName),
+                        escapeCsv(ticket.getShowtimeId()),
+                        escapeCsv(bookedSeatsString),
+                        ticket.getTotalPrice(),
+                        escapeCsv(ticket.getBookingDate())));
+            }
+            System.out.println("Xuat du lieu ra file CSV thanh cong: " + fileName);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Loi khi xuat file CSV: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private Showtime findShowtimeByIdInternal(String id, List<Showtime> list) {
+        for (Showtime s : list) {
+            if (s.getShowtimeId().equals(id))
+                return s;
+        }
+        return null;
+    }
+
+    private Movie findMovieByIdInternal(String id, List<Movie> list) {
+        for (Movie m : list) {
+            if (m.getMovieId().equals(id))
+                return m;
+        }
+        return null;
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null)
+            return "";
+        if (value.contains(",") || value.contains("\"")) {
+            value = value.replace("\"", "\"\"");
+            return "\"" + value + "\"";
+        }
+        return value;
     }
 }
