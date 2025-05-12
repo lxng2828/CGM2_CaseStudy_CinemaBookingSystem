@@ -10,7 +10,9 @@ import model.User;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +24,7 @@ public class DataService {
     private static final String SHOWTIMES_FILE_PATH = "data/showtimes.csv";
     private static final String BOOKINGS_FILE_PATH = "data/bookings.csv";
     private static final String CSV_DELIMITER = ",";
+    private static final String SEAT_LIST_DELIMITER = ";";
 
     public DataService() {
     }
@@ -166,7 +169,7 @@ public class DataService {
 
                     List<String> bookedSeatsList = new ArrayList<>();
                     if (!bookedSeatsString.isEmpty()) {
-                        bookedSeatsList.addAll(Arrays.asList(bookedSeatsString.split(";")));
+                        bookedSeatsList.addAll(Arrays.asList(bookedSeatsString.split(SEAT_LIST_DELIMITER)));
                     }
 
                     bookings.add(
@@ -179,5 +182,81 @@ public class DataService {
             System.err.println("Loi khi doc file bookings.csv: " + e.getMessage());
         }
         return bookings;
+    }
+
+    public void saveUsers(List<User> users) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(USERS_FILE_PATH, false))) {
+            for (User user : users) {
+                writer.println(user.getEmail() + CSV_DELIMITER +
+                        user.getPassword() + CSV_DELIMITER +
+                        user.getRole().name());
+            }
+        } catch (IOException e) {
+            System.err.println("Loi khi ghi file users.csv: " + e.getMessage());
+        }
+    }
+
+    public void saveMovies(List<Movie> movies) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(MOVIES_FILE_PATH, false))) {
+            for (Movie movie : movies) {
+                writer.println(movie.getMovieId() + CSV_DELIMITER +
+                        movie.getMovieName() + CSV_DELIMITER +
+                        movie.getGenre() + CSV_DELIMITER +
+                        movie.getDurationInMinutes() + CSV_DELIMITER +
+                        movie.getDescription());
+            }
+        } catch (IOException e) {
+            System.err.println("Loi khi ghi file movies.csv: " + e.getMessage());
+        }
+    }
+
+    public void saveShowtimes(List<Showtime> showtimes) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(SHOWTIMES_FILE_PATH, false))) {
+            for (Showtime showtime : showtimes) {
+                int rows = 0;
+                int cols = 0;
+                if (showtime.getSeatMap() != null && showtime.getSeatMap().length > 0) {
+                    rows = showtime.getSeatMap().length;
+                    if (showtime.getSeatMap()[0] != null) {
+                        cols = showtime.getSeatMap()[0].length;
+                    }
+                }
+                writer.println(showtime.getShowtimeId() + CSV_DELIMITER +
+                        showtime.getMovieId() + CSV_DELIMITER +
+                        showtime.getShowDate() + CSV_DELIMITER +
+                        showtime.getStartTime() + CSV_DELIMITER +
+                        showtime.getRoomName() + CSV_DELIMITER +
+                        rows + CSV_DELIMITER +
+                        cols);
+            }
+        } catch (IOException e) {
+            System.err.println("Loi khi ghi file showtimes.csv: " + e.getMessage());
+        }
+    }
+
+    public void saveBookings(List<Ticket> bookings) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(BOOKINGS_FILE_PATH, false))) {
+            for (Ticket ticket : bookings) {
+                StringBuilder seatsBuilder = new StringBuilder();
+                if (ticket.getBookedSeats() != null && !ticket.getBookedSeats().isEmpty()) {
+                    for (int i = 0; i < ticket.getBookedSeats().size(); i++) {
+                        seatsBuilder.append(ticket.getBookedSeats().get(i));
+                        if (i < ticket.getBookedSeats().size() - 1) {
+                            seatsBuilder.append(SEAT_LIST_DELIMITER);
+                        }
+                    }
+                }
+                String bookedSeatsString = seatsBuilder.toString();
+
+                writer.println(ticket.getTicketId() + CSV_DELIMITER +
+                        ticket.getShowtimeId() + CSV_DELIMITER +
+                        ticket.getCustomerEmail() + CSV_DELIMITER +
+                        bookedSeatsString + CSV_DELIMITER +
+                        ticket.getBookingDate() + CSV_DELIMITER +
+                        ticket.getTotalPrice());
+            }
+        } catch (IOException e) {
+            System.err.println("Loi khi ghi file bookings.csv: " + e.getMessage());
+        }
     }
 }
