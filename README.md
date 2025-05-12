@@ -1,4 +1,4 @@
-*A. Thao Tác của Khách Hàng (Người dùng thường)**
+**A. Thao Tác của Khách Hàng (Người dùng thường)**
 
 1.  **`Đăng ký tài khoản`**: Tạo một tài khoản mới bằng cách cung cấp email và mật khẩu.
 2.  **`Đăng nhập vào hệ thống`**: Truy cập vào tài khoản cá nhân bằng email và mật khẩu đã đăng ký.
