@@ -61,7 +61,6 @@ public class ConsoleApplication {
                         System.out.println("Lua chon khong hop le. Vui long chon lai.");
                 }
             } else {
-
                 if (currentUser instanceof Customer) {
                     handleCustomerActions();
                 } else if (currentUser instanceof Admin) {
@@ -110,7 +109,6 @@ public class ConsoleApplication {
         String confirmPassword = scanner.nextLine();
 
         Customer newCustomer = authService.registerCustomer(email, password, confirmPassword, this.allUsers);
-
         waitForEnter();
     }
 
@@ -134,8 +132,7 @@ public class ConsoleApplication {
                     handleViewCustomerBookingHistory();
                     break;
                 case 5:
-                    System.out.println("Chuc nang 'Thay doi mat khau' chua duoc trien khai.");
-                    waitForEnter();
+                    handleChangePassword();
                     break;
                 case 0:
                     handleLogout();
@@ -171,7 +168,6 @@ public class ConsoleApplication {
                         movie.getDurationInMinutes(), movie.getGenre());
             }
         }
-
     }
 
     private void viewMovieDetails() {
@@ -212,7 +208,6 @@ public class ConsoleApplication {
 
     private void handleBookTickets() {
         System.out.println("\n--- Dat Ve Xem Phim ---");
-
         viewMovieList();
         if (this.allMovies.isEmpty()) {
             waitForEnter();
@@ -295,7 +290,6 @@ public class ConsoleApplication {
         String confirm = scanner.nextLine();
 
         if (confirm.equalsIgnoreCase("C")) {
-
             if (!appLogicService.areSeatsAvailable(selectedShowtime, chosenSeats)) {
                 System.out.println(
                         "Dat ve that bai do mot hoac nhieu ghe da duoc dat trong luc ban chon. Vui long thu lai.");
@@ -305,9 +299,7 @@ public class ConsoleApplication {
 
             boolean bookingSuccess = appLogicService.markSeatsAsBooked(selectedShowtime, chosenSeats);
             if (bookingSuccess) {
-
                 String ticketId = appLogicService.generateNewTicketId();
-
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                 String bookingDateTime = sdf.format(new java.util.Date());
 
@@ -337,7 +329,6 @@ public class ConsoleApplication {
             System.out.println("Ban chua dat ve nao.");
         } else {
             for (Ticket ticket : customerBookings) {
-
                 Showtime showtime = appLogicService.findShowtimeById(ticket.getShowtimeId(), this.allShowtimes);
                 Movie movie = null;
                 if (showtime != null) {
@@ -363,6 +354,31 @@ public class ConsoleApplication {
                 System.out.println("Ngay Dat: " + ticket.getBookingDate());
             }
             System.out.println("--------------------");
+        }
+        waitForEnter();
+    }
+
+    private void handleChangePassword() {
+        if (currentUser == null) {
+            System.out.println("Ban can dang nhap de thay doi mat khau.");
+            waitForEnter();
+            return;
+        }
+
+        System.out.println("\n--- Thay Doi Mat Khau ---");
+        System.out.print("Nhap mat khau cu: ");
+        String oldPassword = scanner.nextLine();
+
+        System.out.print("Nhap mat khau moi (it nhat 6 ky tu): ");
+        String newPassword = scanner.nextLine();
+
+        System.out.print("Xac nhan mat khau moi: ");
+        String confirmNewPassword = scanner.nextLine();
+
+        boolean success = appLogicService.changePassword(currentUser, oldPassword, newPassword, confirmNewPassword);
+
+        if (success) {
+            dataService.saveUsers(this.allUsers);
         }
         waitForEnter();
     }
@@ -444,7 +460,6 @@ public class ConsoleApplication {
                     waitForEnter();
                     break;
                 case 0:
-
                     break;
                 default:
                     System.out.println("Lua chon khong hop le.");
@@ -567,7 +582,6 @@ public class ConsoleApplication {
             System.out.print("Ban co muon xoa tat ca suat chieu cua phim nay khong? (C/K): ");
             String confirmDeleteShowtimes = scanner.nextLine();
             if (confirmDeleteShowtimes.equalsIgnoreCase("C")) {
-
                 List<Showtime> remainingShowtimes = new ArrayList<>();
                 for (Showtime st : this.allShowtimes) {
                     if (!st.getMovieId().equalsIgnoreCase(movieId)) {
@@ -628,7 +642,6 @@ public class ConsoleApplication {
                     waitForEnter();
                     break;
                 case 0:
-
                     break;
                 default:
                     System.out.println("Lua chon khong hop le.");
@@ -843,7 +856,6 @@ public class ConsoleApplication {
         System.out.println("\n--- Danh Sach Tat Ca Suat Chieu ---");
         if (this.allShowtimes.isEmpty()) {
             System.out.println("Khong co suat chieu nao trong he thong.");
-
             return;
         }
         for (int i = 0; i < this.allShowtimes.size(); i++) {
@@ -859,7 +871,6 @@ public class ConsoleApplication {
                     st.getStartTime(),
                     st.getRoomName());
         }
-
     }
 
     private void handleViewCustomerAccounts() {
@@ -927,10 +938,8 @@ public class ConsoleApplication {
         String confirm = scanner.nextLine();
 
         if (confirm.equalsIgnoreCase("C")) {
-
             boolean exportSuccess = dataService.exportAllBookingsToCSV(this.allBookings, this.allShowtimes,
                     this.allMovies);
-
         } else {
             System.out.println("Da huy thao tac xuat file.");
         }
@@ -943,7 +952,6 @@ public class ConsoleApplication {
         if (InputValidator.isValidInteger(input)) {
             choice = Integer.parseInt(input);
         } else {
-
             if (!InputValidator.isNullOrEmpty(input)) {
                 System.out.println("Vui long nhap mot so.");
             }

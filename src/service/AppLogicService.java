@@ -14,6 +14,7 @@ public class AppLogicService {
 
     private static final double DEFAULT_PRICE_PER_SEAT = 75000.0;
     private static final String BOOKED_SEAT_MARKER = "XX";
+    private static final int MIN_PASSWORD_LENGTH = 6;
 
     public AppLogicService() {
     }
@@ -89,7 +90,7 @@ public class AppLogicService {
             return null;
         }
 
-        return new int[] { rowIndex, colIndex };
+        return new int[]{rowIndex, colIndex};
     }
 
     public boolean isSeatAvailable(Showtime showtime, String seatId) {
@@ -99,8 +100,7 @@ public class AppLogicService {
 
         String[][] seatMap = showtime.getSeatMap();
         int numRows = seatMap.length;
-        if (numRows == 0)
-            return false;
+        if (numRows == 0) return false;
         int numCols = seatMap[0].length;
 
         int[] coords = getSeatCoordinates(seatId, numRows, numCols);
@@ -133,8 +133,7 @@ public class AppLogicService {
 
         String[][] seatMap = showtime.getSeatMap();
         int numRows = seatMap.length;
-        if (numRows == 0)
-            return false;
+        if (numRows == 0) return false;
         int numCols = seatMap[0].length;
 
         for (String seatId : seatIds) {
@@ -179,6 +178,37 @@ public class AppLogicService {
         return customerBookings;
     }
 
+    public boolean changePassword(User currentUser, String oldPassword, String newPassword, String confirmPassword) {
+        if (currentUser == null) {
+            System.out.println("Loi: Khong co nguoi dung nao dang dang nhap.");
+            return false;
+        }
+
+        if (!currentUser.getPassword().equals(oldPassword)) {
+            System.out.println("Mat khau cu khong chinh xac.");
+            return false;
+        }
+
+        if (newPassword == null || newPassword.isEmpty() || !newPassword.equals(confirmPassword)) {
+            System.out.println("Mat khau moi va xac nhan mat khau moi khong khop hoac de trong.");
+            return false;
+        }
+
+        if (newPassword.length() < MIN_PASSWORD_LENGTH) {
+            System.out.println("Mat khau moi phai co it nhat " + MIN_PASSWORD_LENGTH + " ky tu.");
+            return false;
+        }
+
+        if (newPassword.equals(oldPassword)) {
+            System.out.println("Mat khau moi khong duoc trung voi mat khau cu.");
+            return false;
+        }
+
+        currentUser.setPassword(newPassword);
+        System.out.println("Thay doi mat khau thanh cong!");
+        return true;
+    }
+
     public List<User> getAllCustomerAccounts(List<User> allUsers) {
         List<User> customerAccounts = new ArrayList<>();
         if (allUsers == null) {
@@ -198,5 +228,4 @@ public class AppLogicService {
         }
         return allBookings;
     }
-
 }
